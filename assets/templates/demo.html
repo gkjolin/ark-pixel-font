@@ -23,7 +23,7 @@
         a:visited {
             color: cornflowerblue;
         }
-        .btn-apply-theme {
+        .btn-apply-config {
             position: fixed;
             width: 48px;
             height: 48px;
@@ -46,30 +46,34 @@
             margin-bottom: {{ font_config.px * 2 }}px;
             font-size: {{ font_config.px * 3 }}px;
             font-weight: normal;
-            line-height: {{ font_config.px * 4 }}px;
+            line-height: {{ font_config.line_height_px * 3 }}px;
         }
         .content {
             margin-top: {{ font_config.px * 2 }}px;
             margin-bottom: {{ font_config.px * 2 }}px;
             font-size: {{ font_config.px * 2 }}px;
-            line-height: {{ font_config.px * 3 }}px;
+            line-height: {{ font_config.line_height_px * 2 }}px;
         }
-        {% for locale_flavor in locale_flavors %}
-            {% with font_family = font_config.get_output_unique_name(locale_flavor) %}
-                @font-face {
-                    font-family: {{ font_family }};
-                    src: url("{{ font_config.get_output_font_file_name(locale_flavor, 'woff2') }}");
-                }
-                .app-font-{{ locale_flavor }} {
-                    font-family: {{ font_family }}, cursive;
-                }
-            {% endwith %}
+        {% for size_mode in size_modes %}
+            {% for locale_flavor in locale_flavors %}
+                {% with font_family = font_config.get_output_unique_name(size_mode, locale_flavor) %}
+                    @font-face {
+                        font-family: {{ font_family }};
+                        src: url("{{ font_config.get_output_font_file_name(size_mode, locale_flavor, 'woff2') }}");
+                    }
+                    .app-font-{{ size_mode }} .app-font-{{ locale_flavor }} {
+                        font-family: {{ font_family }}, cursive;
+                    }
+                {% endwith %}
+            {% endfor %}
         {% endfor %}
     </style>
 </head>
-<body class="theme-light">
-<div class="btn-apply-theme theme-light" style="top: 0; left: 0;" onclick="applyLightTheme()"></div>
-<div class="btn-apply-theme theme-dark" style="top: 0; right: 0;" onclick="applyDarkTheme()"></div>
+<body class="theme-light app-font-monospaced">
+<div class="btn-apply-config theme-light" style="top: 0; left: 0;" onclick="applyLightTheme()"></div>
+<div class="btn-apply-config theme-dark" style="top: 0; right: 0;" onclick="applyDarkTheme()"></div>
+<div class="btn-apply-config" style="bottom: 0; left: 0; background-color: dodgerblue;" onclick="applyMonospaced()"></div>
+<div class="btn-apply-config" style="bottom: 0; right: 0; background-color: mediumaquamarine;" onclick="applyProportional()"></div>
 <div class="page">
     <h1 class="title app-font-zh_cn">任天堂</h1>
     <a class="content app-font-zh_cn" href="https://zh.wikipedia.org/zh-cn/%E4%BB%BB%E5%A4%A9%E5%A0%82" target="_blank">https://zh.wikipedia.org/zh-cn/%E4%BB%BB%E5%A4%A9%E5%A0%82</a>
@@ -101,12 +105,27 @@
     <p class="content app-font-zh_cn">Nintendo имеет множество дочерних компаний в Японии и за рубежом, а также таких деловых партнеров, как The Pokémon Company и HAL Laboratory. Компания Nintendo и ее сотрудники были удостоены таких наград, как Technology & Engineering Emmy Awards, Game Awards, Game Developers Choice Awards и «Премия Британской Академии в области видеоигр». Это одна из самых богатых и ценных компаний на японском рынке.</p>
 </div>
 <script>
+    var currentTheme = 'theme-light'
+    var currentSizeMode = 'monospaced'
+
     function applyLightTheme() {
-        document.body.className = 'theme-light';
+        currentTheme = 'theme-light';
+        document.body.className = currentTheme + " " + currentSizeMode;
     }
 
     function applyDarkTheme() {
-        document.body.className = 'theme-dark';
+        currentTheme = 'theme-dark';
+        document.body.className = currentTheme + " " + currentSizeMode;
+    }
+
+    function applyMonospaced() {
+        currentSizeMode = 'app-font-monospaced';
+        document.body.className = currentTheme + " " + currentSizeMode;
+    }
+
+    function applyProportional() {
+        currentSizeMode = 'app-font-proportional';
+        document.body.className = currentTheme + " " + currentSizeMode;
     }
 </script>
 </body>

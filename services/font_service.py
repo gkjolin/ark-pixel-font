@@ -86,50 +86,53 @@ def _create_font_builder(name_strings, units_per_em, ascent, descent, glyph_orde
     return builder
 
 
-def make_fonts(font_config, alphabet, design_file_paths_map):
-    units_per_em, ascent, descent = font_config.get_metrics()
-    glyph_order = ['.notdef']
-    character_map = {}
-    for c in alphabet:
-        code_point = ord(c)
-        glyph_name = f'uni{code_point:04X}'
-        glyph_order.append(glyph_name)
-        character_map[code_point] = glyph_name
-    otf_glyph_infos_pool = {}
-    ttf_glyph_infos_pool = {}
-    for locale_flavor in configs.locale_flavors:
-        output_display_name = font_config.get_output_display_name(locale_flavor)
-        output_unique_name = font_config.get_output_unique_name(locale_flavor)
-        name_strings = {
-            'copyright': font_define.copyright_string,
-            'familyName': output_display_name,
-            'styleName': font_define.style_name,
-            'uniqueFontIdentifier': f'{output_unique_name}-{font_define.style_name};{font_define.version}',
-            'fullName': output_display_name,
-            'version': font_define.version,
-            'psName': f'{output_unique_name}-{font_define.style_name}',
-            'designer': font_define.designer,
-            'description': font_define.description,
-            'vendorURL': font_define.vendor_url,
-            'designerURL': font_define.designer_url,
-            'licenseDescription': font_define.license_description,
-            'licenseInfoURL': font_define.license_info_url
-        }
-        design_file_paths = design_file_paths_map[locale_flavor]
+def make_fonts(font_config, alphabet_map, design_file_paths_map):
+    for size_mode in configs.size_modes:
+        units_per_em, ascent, descent = font_config.get_metrics(size_mode)
+        glyph_order = ['.notdef']
+        character_map = {}
+        alphabet = alphabet_map[size_mode]
+        for c in alphabet:
+            code_point = ord(c)
+            glyph_name = f'uni{code_point:04X}'
+            glyph_order.append(glyph_name)
+            character_map[code_point] = glyph_name
+        otf_glyph_infos_pool = {}
+        ttf_glyph_infos_pool = {}
+        for locale_flavor in configs.locale_flavors:
+            output_display_name = font_config.get_output_display_name(size_mode, locale_flavor)
+            output_unique_name = font_config.get_output_unique_name(size_mode, locale_flavor)
+            name_strings = {
+                'copyright': font_define.copyright_string,
+                'familyName': output_display_name,
+                'styleName': font_define.style_name,
+                'uniqueFontIdentifier': f'{output_unique_name}-{font_define.style_name};{font_define.version}',
+                'fullName': output_display_name,
+                'version': font_define.version,
+                'psName': f'{output_unique_name}-{font_define.style_name}',
+                'designer': font_define.designer,
+                'description': font_define.description,
+                'vendorURL': font_define.vendor_url,
+                'designerURL': font_define.designer_url,
+                'licenseDescription': font_define.license_description,
+                'licenseInfoURL': font_define.license_info_url
+            }
+            design_file_paths = design_file_paths_map[size_mode][locale_flavor]
+            origin_y_px = font_config.get_origin_y_px(size_mode)
 
-        otf_glyph_infos_map = _draw_glyphs(otf_glyph_infos_pool, design_file_paths, font_config.origin_y_px, font_config.em_dot_size, False)
-        otf_builder = _create_font_builder(name_strings, units_per_em, ascent, descent, glyph_order, character_map, otf_glyph_infos_map, False)
-        otf_file_output_path = os.path.join(workspace_define.outputs_dir, font_config.get_output_font_file_name(locale_flavor, 'otf'))
-        otf_builder.save(otf_file_output_path)
-        logger.info(f'make {otf_file_output_path}')
+            otf_glyph_infos_map = _draw_glyphs(otf_glyph_infos_pool, design_file_paths, origin_y_px, font_config.em_dot_size, False)
+            otf_builder = _create_font_builder(name_strings, units_per_em, ascent, descent, glyph_order, character_map, otf_glyph_infos_map, False)
+            otf_file_output_path = os.path.join(workspace_define.outputs_dir, font_config.get_output_font_file_name(size_mode, locale_flavor, 'otf'))
+            otf_builder.save(otf_file_output_path)
+            logger.info(f'make {otf_file_output_path}')
 
-        otf_builder.font.flavor = 'woff2'
-        woff2_file_output_path = os.path.join(workspace_define.outputs_dir, font_config.get_output_font_file_name(locale_flavor, 'woff2'))
-        otf_builder.save(woff2_file_output_path)
-        logger.info(f'make {woff2_file_output_path}')
+            otf_builder.font.flavor = 'woff2'
+            woff2_file_output_path = os.path.join(workspace_define.outputs_dir, font_config.get_output_font_file_name(size_mode, locale_flavor, 'woff2'))
+            otf_builder.save(woff2_file_output_path)
+            logger.info(f'make {woff2_file_output_path}')
 
-        ttf_glyph_infos_map = _draw_glyphs(ttf_glyph_infos_pool, design_file_paths, font_config.origin_y_px, font_config.em_dot_size, True)
-        ttf_builder = _create_font_builder(name_strings, units_per_em, ascent, descent, glyph_order, character_map, ttf_glyph_infos_map, True)
-        ttf_file_output_path = os.path.join(workspace_define.outputs_dir, font_config.get_output_font_file_name(locale_flavor, 'ttf'))
-        ttf_builder.save(ttf_file_output_path)
-        logger.info(f'make {ttf_file_output_path}')
+            ttf_glyph_infos_map = _draw_glyphs(ttf_glyph_infos_pool, design_file_paths, origin_y_px, font_config.em_dot_size, True)
+            ttf_builder = _create_font_builder(name_strings, units_per_em, ascent, descent, glyph_order, character_map, ttf_glyph_infos_map, True)
+            ttf_file_output_path = os.path.join(workspace_define.outputs_dir, font_config.get_output_font_file_name(size_mode, locale_flavor, 'ttf'))
+            ttf_builder.save(ttf_file_output_path)
+            logger.info(f'make {ttf_file_output_path}')
