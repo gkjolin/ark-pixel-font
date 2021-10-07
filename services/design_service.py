@@ -101,7 +101,7 @@ def verify_and_handle_design_files(font_config):
                     if size_mode == 'monospaced':
                         assert height == font_config.px, design_file_path
                     else:
-                        assert height == font_config.line_height_px, design_file_path
+                        assert height == font_config.proportional_design_px, design_file_path
 
                     # 校验间距
                     if size_mode == 'monospaced' and 0x4E00 <= code_point <= 0x9FFF:
